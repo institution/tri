@@ -1,0 +1,25 @@
+aaa:
+	jmp start;
+	
+i: 0;
+j: 1;
+limit: 35;
+
+start: 
+	out i;
+	out j;
+	
+loop:
+	add i j;
+	jle limit i end;
+	out i;
+	
+	add j i;
+	jle limit j end;
+	out j;
+	
+	jmp loop;
+		
+end:
+	
+	
