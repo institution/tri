@@ -1,0 +1,11 @@
+  jmp start;
+	
+a: mem ?;
+b: mem 2;
+c: mem 2;
+
+start: 
+  mov a constadr(0);
+  add a b;
+  add a c;
+  out a;

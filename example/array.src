@@ -1,0 +1,11 @@
+  jmp start;
+
+data: mem 1 2 3 4 5;
+ len: mem 5;
+   i: mem 1;
+
+start:  
+  copy_to: mem outadr(); copy_from: mem data; mem next();
+  add copy_from constadr(1);
+  add i constadr(1);
+  jle i len start;
