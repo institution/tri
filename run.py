@@ -1,10 +1,13 @@
+import sys
 import struct
 
 def main():
 	pc = 0
 
+	fname = sys.argv[1]
+
 	xs = []
-	with open('out', 'rb') as f:
+	with open(fname, 'rb') as f:
 		di = struct.calcsize('i')
 		while 1:
 			buf = f.read(di)
@@ -13,7 +16,7 @@ def main():
 			xs.extend(struct.unpack('i', buf))
 
 
-	print xs
+
 	while 1:			
 		#print pc
 		

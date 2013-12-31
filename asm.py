@@ -5,6 +5,7 @@ from pyparsing import Word, alphas, nums, Literal, Forward, Optional, Keyword, S
 import pyparsing
 import struct
 import sys
+import os
 import traceback
 
 def List(item):
@@ -53,10 +54,10 @@ def map_int(s,l,ts):
 def run(func):
 	def inner(s,l,ts):
 		try:
-			print ts
+
 			if len(ts) == 1 and type(ts[0]) is Token:
 				ts = ts[0].ts
-			print ts
+
 			func(*ts)
 		except:
 			print traceback.format_exc()
@@ -107,6 +108,7 @@ class Gen(object):
 			'add': self.gen_add,
 			'jle': self.gen_jle,
 			'nil': self.gen_nil,
+			'mem': self.gen_mem,
 		}		
 		
 		self.func = {
@@ -260,6 +262,10 @@ class Gen(object):
 	def gen_sub(self, X, Y):
 		self.gen_tri(X, Y, t.LabelGen('next'))
 		
+	def gen_mem(self, *xs):
+		for x in xs:
+			self.gen_arg(x)
+		
 	def gen_mov(self, X, Y):
 		next = t.LabelGen('next')
 		T = t.LabelGen('tmpadr', 0)
@@ -298,11 +304,6 @@ class Gen(object):
 	def gen_jmp_end(self):
 		cst = partial(t.LabelGen, 'constadr')
 		self.gen_tri(cst(0), cst(0), -1)
-		
-
-	def gen_data(self, num):
-		d = int(num)
-		self.gen_code(d)
 
 	def gen_end_progr(self, *instrs):
 		self.gen_jmp_end()
@@ -317,7 +318,8 @@ class Gen(object):
 		rpar = Literal(')').suppress()
 		colon = Literal(':').suppress()
 		delimiter = Literal(';').suppress()
-
+		unknown = Literal('?').setParseAction(lambda s,l,t: [0])  # ? -> number 0
+		
 		number = Word(nums).setParseAction(map_int)
 
 		ident = Word(alphas+'_', alphas+nums+'_')
@@ -330,13 +332,11 @@ class Gen(object):
 
 		label_ref = ident.copy().setParseAction(tokenize('LabelRef'))
 
-		operand = number | label_gen | label_ref
+		operand = number | label_gen | label_ref | unknown
 
 		instr = (ident + List(operand) + delimiter).setParseAction(tokenize('Instr'), run(g.gen_instr))
 		
-		data = (number + delimiter).setParseAction(run(g.gen_data))
-
-		entry = instr | label_def | data
+		entry = instr | label_def
 
 		progr = List(entry).setParseAction(run(self.gen_end_progr))
 		
@@ -355,9 +355,13 @@ class Gen(object):
 
 def main():
 	
-	rs = Gen().parse_file(sys.stdin)
+	fname = sys.argv[1]
+	text = open(fname, 'r').read()
 	
-	with open('out', 'wb') as f:
+	rs = Gen().parse_string(text)
+	oname = os.path.splitext(fname)[0] + '.out'
+	
+	with open(oname, 'wb') as f:
 		for rr in rs:
 			f.write(struct.pack('i', rr))
 	
